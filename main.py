@@ -41,7 +41,7 @@ Rules:
 """
  
 CLARIFY_SYSTEM = """You assist a business directory search. The user's query was incomplete or conflicting.
-Ask ONE short follow-up question targeting the most critical missing or ambiguous field. Return only the question."""
+Ask ONE short follow-up question targeting the key feilds... 1-3 max. Return only the question."""
 
 class SizeRange(BaseModel):
     min: Optional[int] = None   # min emp 
@@ -64,8 +64,9 @@ class AgentState(BaseModel):
     raw_input:              str                    # source query
     parsed_query:           ParsedQuery            = Field(default_factory=ParsedQuery)
     is_valid:               bool                   = False
-    clarification_question: Optional[str]          = None  
-    attempts:               int                    = 0 
+    clarification_question: Optional[str]          = None
+    clarification_answer:   Optional[str]          = None
+    attempts:               int                    = 0
 
 
 llm        = ChatOpenAI(model=MODEL, temperature=0)
@@ -75,7 +76,8 @@ parse_llm  = llm.with_structured_output(ParsedQuery)   # returns ParsedQuery dir
 def parse_node(state: AgentState) -> AgentState:
     user_msg = (
         f"Original query: {state.raw_input}\n"
-        f"Clarification context: user was asked '{state.clarification_question}'"
+        f"Clarification — question: '{state.clarification_question}'\n"
+        f"Clarification — answer: '{state.clarification_answer}'"
         if state.clarification_question else state.raw_input
     )
 
@@ -85,6 +87,7 @@ def parse_node(state: AgentState) -> AgentState:
     return state.model_copy(update={
         "parsed_query":           parsed,
         "clarification_question": None,
+        "clarification_answer":   None,
         "attempts":               state.attempts + 1,
     })
 
@@ -108,8 +111,9 @@ def clarify_node(state: AgentState) -> AgentState:
                             {"role": "user",   "content": context}])
     question = resp.content.strip()
 
-    print(f"\n Clarification: {question}") 
-    return state.model_copy(update={"clarification_question": question})
+    print(f"\n  Clarification: {question}")
+    answer = input("  Your answer: ").strip()
+    return state.model_copy(update={"clarification_question": question, "clarification_answer": answer})
 
 
 
