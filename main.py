@@ -27,7 +27,9 @@ Return ONLY valid JSON with these exact keys:
   - reasoning: string — brief explanation of every mapping decision: why each field was set,
     why anything was set to null, and why any CONFLICT was flagged.
 
-NOTE : keep reasoning under 50-80 words, not more than that!!!
+NOTE :
+- keep reasoning under 50-80 words, not more than that!!!
+- Capture ALL identifiers from the query (company names, URLs, domains, person names, ticker symbols, etc.) as-is into required_attributes — do not drop them.
 
 Rules:
 - Use null for ANY field that is missing OR too vague to act on.
